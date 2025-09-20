@@ -24,6 +24,11 @@ YOUTUBE_OUTDIR ?= $(WORKDIR)/youtube
 YOUTUBE_SOURCE ?= sentences
 YOUTUBE_GAP_THRESH ?= 1.5
 
+# Multilingual support
+SOURCE_LANGUAGE ?= 
+TRANSLATE ?= false
+TRANSLATION_MODEL ?= gpt-4o-mini
+
 # Debug and logging
 DEBUG ?= false
 VERBOSE ?= --verbose
@@ -69,7 +74,7 @@ prep: check-env check-files
 	@echo "Creating work directory..."
 	@mkdir -p "$(WORKDIR)"
 	@echo "Running transcription and segmentation..."
-	@PYTHONUNBUFFERED=1 $(POETRY) run python -c "import dubber.cli; import sys; sys.argv = ['dubber.cli', '--input_video', '$(VIDEO)', '--workdir', '$(WORKDIR)', '--stage', 'prep', '--stt', 'local', '--skip-polish', '--align-mode', 'sentence', '--sentence-join-gap', '$(SENT_JOIN_GAP)', '--sentences-per-chunk', '$(SENT_PER_CHUNK)', '--verbose']; dubber.cli.main()" 2>&1 | tee "$(WORKDIR)/prep.log" || echo "Prep completed with warnings"
+	@PYTHONUNBUFFERED=1 $(POETRY) run python -c "import dubber.cli; import sys; args = ['dubber.cli', '--input_video', '$(VIDEO)', '--workdir', '$(WORKDIR)', '--stage', 'prep', '--stt', 'local', '--skip-polish', '--align-mode', 'sentence', '--sentence-join-gap', '$(SENT_JOIN_GAP)', '--sentences-per-chunk', '$(SENT_PER_CHUNK)', '--verbose']; args.extend(['--source-language', '$(SOURCE_LANGUAGE)']) if '$(SOURCE_LANGUAGE)' else None; args.extend(['--translate']) if '$(TRANSLATE)' = 'true' else None; args.extend(['--translation-model', '$(TRANSLATION_MODEL)']) if '$(TRANSLATE)' = 'true' else None; sys.argv = args; dubber.cli.main()" 2>&1 | tee "$(WORKDIR)/prep.log" || echo "Prep completed with warnings"
 	@echo "Checking prep results..."
 	@if [ ! -f "$(WORKDIR)/subs.srt" ]; then \
 		echo "ERROR: subs.srt not created"; \
@@ -315,6 +320,9 @@ help:
 	@echo "  TTS_PROVIDER   - TTS provider: openai or elevenlabs (default: openai)"
 	@echo "  VOICE          - TTS voice (default: onyx)"
 	@echo "  MAX_CONCURRENT - Max concurrent TTS requests for async mode (default: 5)"
+	@echo "  SOURCE_LANGUAGE- Source language code (e.g., 'ru', 'de', 'fr'). Auto-detected if empty"
+	@echo "  TRANSLATE       - Enable translation to English: true/false (default: false)"
+	@echo "  TRANSLATION_MODEL - GPT model for translation (default: gpt-4o-mini)"
 	@echo "  YOUTUBE_SOURCE - YouTube chapters source: sentences, srt, blocks (default: sentences)"
 	@echo "  VERBOSE        - Add --verbose flag (default: --verbose)"
 	@echo ""
@@ -322,6 +330,8 @@ help:
 	@echo "  make setup"
 	@echo "  make prep VIDEO=media/2.mp4 WORKDIR=.work/lesson2"
 	@echo "  make synth TTS_PROVIDER=elevenlabs VOICE=rachel"
+	@echo "  make full VIDEO=media/russian_video.mp4 SOURCE_LANGUAGE=ru TRANSLATE=true"
+	@echo "  make prep VIDEO=media/german_video.mp4 SOURCE_LANGUAGE=de TRANSLATE=true"
 	@echo "  make synth-async MAX_CONCURRENT=10  # Faster async processing"
 	@echo "  make youtube YOUTUBE_SOURCE=srt YOUTUBE_GAP_THRESH=2.0"
 	@echo "  make full VIDEO=media/tutorial.mp4 OUTPUT=out/tutorial_dubbed.mp4"

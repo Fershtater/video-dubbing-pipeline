@@ -17,8 +17,38 @@ except ImportError:
     OpenAI = None
 
 
+def detect_language(client: OpenAI, wav_path: str) -> str | None:
+    """Detect language of audio using OpenAI Whisper API."""
+    if client is None:
+        return None
+    
+    try:
+        with open(wav_path, "rb") as f:
+            logger.info("Detecting language with Whisper API...")
+            resp = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=f,
+                response_format="verbose_json",
+                language=None,  # Let Whisper auto-detect
+            )
+        
+        # Extract language from response
+        detected_lang = getattr(resp, "language", None)
+        if detected_lang is None and isinstance(resp, dict):
+            detected_lang = resp.get("language")
+        
+        if detected_lang:
+            logger.info(f"Detected language: {detected_lang}")
+            return detected_lang
+        
+        return None
+    except Exception as e:
+        logger.warning(f"Language detection failed: {e}")
+        return None
+
+
 def transcribe_whisper_api(
-    client: OpenAI, wav_path: str, model: str = "whisper-1"
+    client: OpenAI, wav_path: str, model: str = "whisper-1", language: str = None
 ) -> list[Segment]:
     """Transcribe audio using OpenAI Whisper API."""
     if client is None:
@@ -54,12 +84,15 @@ def transcribe_whisper_api(
 
     try:
         with open(wav_path, "rb") as f:
-            logger.info(f"Transcribing with {model} …")
-            resp = client.audio.transcriptions.create(
-                model=model,
-                file=f,
-                response_format="verbose_json",
-            )
+            logger.info(f"Transcribing with {model} (language: {language or 'auto'}) …")
+            kwargs = {
+                "model": model,
+                "file": f,
+                "response_format": "verbose_json",
+            }
+            if language:
+                kwargs["language"] = language
+            resp = client.audio.transcriptions.create(**kwargs)
         segs = _segments_from_response(resp)
         if segs:
             return segs
@@ -90,7 +123,7 @@ def transcribe_whisper_api(
 
 
 def transcribe_local_faster_whisper(
-    wav_path: str, local_model: str = "base.en", beam_size: int = 1
+    wav_path: str, local_model: str = "base", beam_size: int = 1, language: str = None
 ) -> list[Segment]:
     """Transcribe audio using local faster-whisper."""
     try:
@@ -100,12 +133,32 @@ def transcribe_local_faster_whisper(
             "faster-whisper is not installed. Install with: poetry add faster-whisper"
         ) from e
 
-    logger.info(f"Transcribing locally with faster-whisper ({local_model}) …")
+    logger.info(f"Transcribing locally with faster-whisper ({local_model}, language: {language or 'auto'}) …")
     model = WhisperModel(local_model, device="cpu", compute_type="int8")
+
+    # Determine language parameter
+    whisper_language = None
+    if language:
+        # Map common language codes to Whisper format
+        lang_map = {
+            "ru": "ru", "russian": "ru",
+            "de": "de", "german": "de", 
+            "fr": "fr", "french": "fr",
+            "es": "es", "spanish": "es",
+            "it": "it", "italian": "it",
+            "pt": "pt", "portuguese": "pt",
+            "ja": "ja", "japanese": "ja",
+            "ko": "ko", "korean": "ko",
+            "zh": "zh", "chinese": "zh",
+            "ar": "ar", "arabic": "ar",
+            "hi": "hi", "hindi": "hi",
+            "en": "en", "english": "en"
+        }
+        whisper_language = lang_map.get(language.lower())
 
     segments_iter, _info = model.transcribe(
         wav_path,
-        language="en",
+        language=whisper_language,
         vad_filter=True,
         beam_size=beam_size,
         word_timestamps=False,

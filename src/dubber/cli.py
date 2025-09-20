@@ -33,7 +33,8 @@ from .sentences import (
     write_sentences_manifest,
 )
 from .srt_utils import normalize_segments_by_punct, parse_srt, write_srt
-from .stt import transcribe_local_faster_whisper, transcribe_whisper_api
+from .stt import transcribe_local_faster_whisper, transcribe_whisper_api, detect_language
+from .translation import translate_segments_to_english, get_language_name
 from .timeline import build_timeline_blocks, build_timeline_sentences, build_timeline_wav
 from .tts import make_synth_elevenlabs, make_synth_openai, pick_elevenlabs_default_voice
 from .youtube import generate_youtube_assets, write_youtube_assets
@@ -81,6 +82,15 @@ def parse_args() -> argparse.Namespace:
     )
     ap.add_argument("--gpt-model", default="gpt-4o-mini")
     ap.add_argument("--whisper-model", default="whisper-1")
+    
+    # Multilingual support
+    ap.add_argument("--source-language", default=None, 
+                   help="Source language code (e.g., 'ru', 'de', 'fr'). Auto-detected if not specified.")
+    ap.add_argument("--translate", action="store_true",
+                   help="Enable translation from source language to English")
+    ap.add_argument("--translation-model", default="gpt-4o-mini",
+                   help="GPT model to use for translation")
+    
     ap.add_argument("--skip-polish", action="store_true")
     ap.add_argument(
         "--segments-json",
@@ -336,19 +346,63 @@ def main() -> None:
         logger.info(f"Loaded SRT -> {srt_path} ({len(segments)} segments)")
     else:
         # prep: do STT (+opt. polish) and write SRT
+        detected_language = None
+        
+        # Detect language if not specified and translation is enabled
+        if args.translate and not args.source_language and client:
+            logger.info("Auto-detecting source language...")
+            detected_language = detect_language(client, input_wav)
+            if detected_language:
+                logger.info(f"Detected source language: {get_language_name(detected_language)} ({detected_language})")
+        
+        source_language = args.source_language or detected_language
+        
         if args.stt == "openai":
             try:
-                segments = transcribe_whisper_api(client, input_wav, model=args.whisper_model)
+                segments = transcribe_whisper_api(
+                    client, input_wav, 
+                    model=args.whisper_model, 
+                    language=source_language
+                )
             except Exception as e:
                 logger.warning(
                     f"API transcription failed: {e}\nFalling back to local faster-whisper…"
                 )
-                segments = transcribe_local_faster_whisper(input_wav, local_model="base.en")
+                # Use multilingual model for local fallback
+                local_model = "base" if source_language and source_language != "en" else "base.en"
+                segments = transcribe_local_faster_whisper(
+                    input_wav, 
+                    local_model=local_model,
+                    language=source_language
+                )
         else:
-            segments = transcribe_local_faster_whisper(input_wav, local_model="base.en")
+            # Use multilingual model for local transcription
+            local_model = "base" if source_language and source_language != "en" else "base.en"
+            segments = transcribe_local_faster_whisper(
+                input_wav, 
+                local_model=local_model,
+                language=source_language
+            )
 
         if all(not s.text.strip() for s in segments):
             raise RuntimeError("Transcription returned empty text.")
+
+        # Translate segments if needed
+        if args.translate and source_language and source_language != "en":
+            logger.info(f"Translating segments from {get_language_name(source_language)} to English...")
+            if not client:
+                raise RuntimeError("Translation requires OpenAI client. Set OPENAI_API_KEY environment variable.")
+            
+            try:
+                segments = translate_segments_to_english(
+                    client, segments, 
+                    source_language=source_language,
+                    model=args.translation_model
+                )
+                logger.info(f"Translation completed: {len(segments)} segments translated")
+            except Exception as e:
+                logger.error(f"Translation failed: {e}")
+                raise RuntimeError(f"Translation failed: {e}")
 
         raw_json = os.path.join(args.workdir, "segments_raw.json")
         with open(raw_json, "w", encoding="utf-8") as f:
