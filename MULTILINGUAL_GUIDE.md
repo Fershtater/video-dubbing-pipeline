@@ -21,30 +21,30 @@ make full-async VIDEO=media/german_video.mp4 SOURCE_LANGUAGE=de TRANSLATE=true
 
 The system supports **99+ languages** including:
 
-| Language | Code | Auto-detect | Transcription | Translation |
-|----------|------|-------------|---------------|-------------|
-| Russian | `ru` | ✅ | ✅ | ✅ |
-| German | `de` | ✅ | ✅ | ✅ |
-| French | `fr` | ✅ | ✅ | ✅ |
-| Spanish | `es` | ✅ | ✅ | ✅ |
-| Italian | `it` | ✅ | ✅ | ✅ |
-| Portuguese | `pt` | ✅ | ✅ | ✅ |
-| Japanese | `ja` | ✅ | ✅ | ✅ |
-| Korean | `ko` | ✅ | ✅ | ✅ |
-| Chinese | `zh` | ✅ | ✅ | ✅ |
-| Arabic | `ar` | ✅ | ✅ | ✅ |
-| Hindi | `hi` | ✅ | ✅ | ✅ |
-| Ukrainian | `uk` | ✅ | ✅ | ✅ |
-| Polish | `pl` | ✅ | ✅ | ✅ |
-| Dutch | `nl` | ✅ | ✅ | ✅ |
-| Swedish | `sv` | ✅ | ✅ | ✅ |
-| Norwegian | `no` | ✅ | ✅ | ✅ |
-| Danish | `da` | ✅ | ✅ | ✅ |
-| Finnish | `fi` | ✅ | ✅ | ✅ |
-| Turkish | `tr` | ✅ | ✅ | ✅ |
-| Hebrew | `he` | ✅ | ✅ | ✅ |
-| Thai | `th` | ✅ | ✅ | ✅ |
-| Vietnamese | `vi` | ✅ | ✅ | ✅ |
+| Language   | Code | Auto-detect | Transcription | Translation |
+| ---------- | ---- | ----------- | ------------- | ----------- |
+| Russian    | `ru` | ✅          | ✅            | ✅          |
+| German     | `de` | ✅          | ✅            | ✅          |
+| French     | `fr` | ✅          | ✅            | ✅          |
+| Spanish    | `es` | ✅          | ✅            | ✅          |
+| Italian    | `it` | ✅          | ✅            | ✅          |
+| Portuguese | `pt` | ✅          | ✅            | ✅          |
+| Japanese   | `ja` | ✅          | ✅            | ✅          |
+| Korean     | `ko` | ✅          | ✅            | ✅          |
+| Chinese    | `zh` | ✅          | ✅            | ✅          |
+| Arabic     | `ar` | ✅          | ✅            | ✅          |
+| Hindi      | `hi` | ✅          | ✅            | ✅          |
+| Ukrainian  | `uk` | ✅          | ✅            | ✅          |
+| Polish     | `pl` | ✅          | ✅            | ✅          |
+| Dutch      | `nl` | ✅          | ✅            | ✅          |
+| Swedish    | `sv` | ✅          | ✅            | ✅          |
+| Norwegian  | `no` | ✅          | ✅            | ✅          |
+| Danish     | `da` | ✅          | ✅            | ✅          |
+| Finnish    | `fi` | ✅          | ✅            | ✅          |
+| Turkish    | `tr` | ✅          | ✅            | ✅          |
+| Hebrew     | `he` | ✅          | ✅            | ✅          |
+| Thai       | `th` | ✅          | ✅            | ✅          |
+| Vietnamese | `vi` | ✅          | ✅            | ✅          |
 
 ## 🔧 Configuration Parameters
 
@@ -128,22 +128,26 @@ done
 ## 🔄 Workflow Details
 
 ### 1. Language Detection
+
 - **Automatic**: Uses Whisper API to detect language
 - **Manual**: Specify `SOURCE_LANGUAGE` parameter
 - **Fallback**: Defaults to English if detection fails
 
 ### 2. Transcription
+
 - **OpenAI Whisper API**: Supports all 99+ languages
 - **Local faster-whisper**: Uses multilingual `base` model
 - **Language-specific**: Optimized models for better accuracy
 
 ### 3. Translation
+
 - **GPT-powered**: Uses OpenAI GPT models for translation
 - **Batch processing**: Translates multiple segments efficiently
 - **Context-aware**: Maintains technical terminology and style
 - **Quality control**: Low temperature for consistent results
 
 ### 4. Synchronization
+
 - **Time-preserving**: Maintains original timing constraints
 - **Segment-based**: Each segment keeps its original time bounds
 - **Audio alignment**: Perfect sync between video and new audio
@@ -151,6 +155,7 @@ done
 ## 🛠️ Technical Implementation
 
 ### Language Detection
+
 ```python
 def detect_language(client: OpenAI, wav_path: str) -> str | None:
     """Detect language using Whisper API"""
@@ -164,6 +169,7 @@ def detect_language(client: OpenAI, wav_path: str) -> str | None:
 ```
 
 ### Translation Pipeline
+
 ```python
 def translate_segments_to_english(
     client: OpenAI,
@@ -178,9 +184,10 @@ def translate_segments_to_english(
 ```
 
 ### Multilingual STT
+
 ```python
 def transcribe_local_faster_whisper(
-    wav_path: str, 
+    wav_path: str,
     local_model: str = "base",  # Multilingual model
     language: str = None
 ) -> list[Segment]:
@@ -190,21 +197,25 @@ def transcribe_local_faster_whisper(
 ## 🎯 Best Practices
 
 ### 1. Language Selection
+
 - **Auto-detect** for unknown languages
 - **Specify explicitly** for better accuracy
 - **Use full language names** for clarity
 
 ### 2. Translation Quality
+
 - **gpt-4o-mini**: Fast and cost-effective
 - **gpt-4o**: Higher quality for important content
 - **Batch processing**: More efficient than individual translation
 
 ### 3. Performance Optimization
+
 - **Async processing**: Use `full-async` for speed
 - **Concurrent requests**: Increase `MAX_CONCURRENT` for parallel processing
 - **Local models**: Use faster-whisper for offline processing
 
 ### 4. Quality Assurance
+
 - **Preview segments**: Check transcription quality
 - **Review translation**: Verify technical terms
 - **Test sync**: Ensure audio-video alignment
@@ -214,18 +225,21 @@ def transcribe_local_faster_whisper(
 ### Common Issues
 
 1. **Language not detected**
+
    ```bash
    # Specify language explicitly
    SOURCE_LANGUAGE=ru TRANSLATE=true
    ```
 
 2. **Poor translation quality**
+
    ```bash
    # Use higher-quality model
    TRANSLATION_MODEL=gpt-4o
    ```
 
 3. **Slow processing**
+
    ```bash
    # Use async processing
    make full-async MAX_CONCURRENT=10
@@ -245,12 +259,14 @@ def transcribe_local_faster_whisper(
 ## 📊 Performance Metrics
 
 ### Processing Times (approximate)
+
 - **Language detection**: 5-10 seconds
 - **Transcription**: 1-2x video duration
 - **Translation**: 0.5-1x video duration
 - **TTS synthesis**: 0.3-0.5x video duration
 
 ### Cost Estimates (OpenAI API)
+
 - **Whisper transcription**: $0.006/minute
 - **GPT translation**: $0.60/1M input tokens
 - **TTS synthesis**: $0.03/minute
