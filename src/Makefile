@@ -74,7 +74,7 @@ prep: check-env check-files
 	@echo "Creating work directory..."
 	@mkdir -p "$(WORKDIR)"
 	@echo "Running transcription and segmentation..."
-	@PYTHONUNBUFFERED=1 $(POETRY) run python -c "import dubber.cli; import sys; args = ['dubber.cli', '--input_video', '$(VIDEO)', '--workdir', '$(WORKDIR)', '--stage', 'prep', '--stt', 'local', '--skip-polish', '--align-mode', 'sentence', '--sentence-join-gap', '$(SENT_JOIN_GAP)', '--sentences-per-chunk', '$(SENT_PER_CHUNK)', '--verbose']; args.extend(['--source-language', '$(SOURCE_LANGUAGE)']) if '$(SOURCE_LANGUAGE)' else None; args.extend(['--translate']) if '$(TRANSLATE)' = 'true' else None; args.extend(['--translation-model', '$(TRANSLATION_MODEL)']) if '$(TRANSLATE)' = 'true' else None; sys.argv = args; dubber.cli.main()" 2>&1 | tee "$(WORKDIR)/prep.log" || echo "Prep completed with warnings"
+	@PYTHONUNBUFFERED=1 $(POETRY) run python -c "import dubber.cli; import sys; args = ['dubber.cli', '--input_video', '$(VIDEO)', '--workdir', '$(WORKDIR)', '--stage', 'prep', '--stt', 'local', '--skip-polish', '--align-mode', 'sentence', '--sentence-join-gap', '$(SENT_JOIN_GAP)', '--sentences-per-chunk', '$(SENT_PER_CHUNK)', '--verbose']; args.extend(['--source-language', '$(SOURCE_LANGUAGE)']) if '$(SOURCE_LANGUAGE)' != '' else None; args.extend(['--translate']) if '$(TRANSLATE)' == 'true' else None; args.extend(['--translation-model', '$(TRANSLATION_MODEL)']) if '$(TRANSLATE)' == 'true' else None; sys.argv = args; dubber.cli.main()" 2>&1 | tee "$(WORKDIR)/prep.log" || echo "Prep completed with warnings"
 	@echo "Checking prep results..."
 	@if [ ! -f "$(WORKDIR)/subs.srt" ]; then \
 		echo "ERROR: subs.srt not created"; \

@@ -15,20 +15,20 @@ except ImportError:
 
 
 def translate_to_english(
-    client: OpenAI, 
-    text: str, 
+    client: OpenAI,
+    text: str,
     source_language: Optional[str] = None,
     model: str = "gpt-4o-mini"
 ) -> str:
     """
     Translate text from any language to English using OpenAI GPT.
-    
+
     Args:
         client: OpenAI client instance
         text: Text to translate
         source_language: Source language code (optional, will be auto-detected)
         model: GPT model to use for translation
-        
+
     Returns:
         Translated text in English
     """
