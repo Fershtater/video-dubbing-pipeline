@@ -294,6 +294,7 @@ def main() -> None:
         or (not args.skip_polish)
         or (args.tts_provider == "openai" and args.stage in ["synth", "burn"])
         or (args.youtube_ai and args.stage == "youtube")
+        or (args.translate and args.stage == "prep")  # Translation needs OpenAI client
     )
     openai_key = os.getenv("OPENAI_API_KEY")
     client = None
