@@ -294,7 +294,7 @@ def generate_youtube_assets(
 ) -> YouTubeAssets:
     """Generate complete YouTube assets."""
     logger.info(f"Generating YouTube assets: workdir={workdir}, use_ai={use_ai}, client={client is not None}")
-    
+
     # Load segments
     segments_path = Path(workdir) / "subs.srt"
     if not segments_path.exists():

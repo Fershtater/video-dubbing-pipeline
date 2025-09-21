@@ -21,7 +21,7 @@ def detect_language(client: OpenAI, wav_path: str) -> str | None:
     """Detect language of audio using OpenAI Whisper API."""
     if client is None:
         return None
-    
+
     try:
         with open(wav_path, "rb") as f:
             logger.info("Detecting language with Whisper API...")
@@ -31,16 +31,16 @@ def detect_language(client: OpenAI, wav_path: str) -> str | None:
                 response_format="verbose_json",
                 language=None,  # Let Whisper auto-detect
             )
-        
+
         # Extract language from response
         detected_lang = getattr(resp, "language", None)
         if detected_lang is None and isinstance(resp, dict):
             detected_lang = resp.get("language")
-        
+
         if detected_lang:
             logger.info(f"Detected language: {detected_lang}")
             return detected_lang
-        
+
         return None
     except Exception as e:
         logger.warning(f"Language detection failed: {e}")
@@ -142,7 +142,7 @@ def transcribe_local_faster_whisper(
         # Map common language codes to Whisper format
         lang_map = {
             "ru": "ru", "russian": "ru",
-            "de": "de", "german": "de", 
+            "de": "de", "german": "de",
             "fr": "fr", "french": "fr",
             "es": "es", "spanish": "es",
             "it": "it", "italian": "it",

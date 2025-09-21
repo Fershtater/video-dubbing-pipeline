@@ -4,7 +4,6 @@ Text-to-speech synthesis with OpenAI and ElevenLabs.
 
 import hashlib
 import logging
-import os
 from pathlib import Path
 from collections.abc import Callable
 

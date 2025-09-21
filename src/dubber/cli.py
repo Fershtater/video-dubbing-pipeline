@@ -82,15 +82,15 @@ def parse_args() -> argparse.Namespace:
     )
     ap.add_argument("--gpt-model", default="gpt-4o-mini")
     ap.add_argument("--whisper-model", default="whisper-1")
-    
+
     # Multilingual support
-    ap.add_argument("--source-language", default=None, 
+    ap.add_argument("--source-language", default=None,
                    help="Source language code (e.g., 'ru', 'de', 'fr'). Auto-detected if not specified.")
     ap.add_argument("--translate", action="store_true",
                    help="Enable translation from source language to English")
     ap.add_argument("--translation-model", default="gpt-4o-mini",
                    help="GPT model to use for translation")
-    
+
     ap.add_argument("--skip-polish", action="store_true")
     ap.add_argument(
         "--segments-json",
@@ -261,7 +261,7 @@ def main() -> None:
     else:
         # Fallback: try loading from current directory
         load_dotenv()
-    
+
     args = parse_args()
     setup_logging(args.verbose)
 
@@ -348,21 +348,21 @@ def main() -> None:
     else:
         # prep: do STT (+opt. polish) and write SRT
         detected_language = None
-        
+
         # Detect language if not specified and translation is enabled
         if args.translate and not args.source_language and client:
             logger.info("Auto-detecting source language...")
             detected_language = detect_language(client, input_wav)
             if detected_language:
                 logger.info(f"Detected source language: {get_language_name(detected_language)} ({detected_language})")
-        
+
         source_language = args.source_language or detected_language
-        
+
         if args.stt == "openai":
             try:
                 segments = transcribe_whisper_api(
-                    client, input_wav, 
-                    model=args.whisper_model, 
+                    client, input_wav,
+                    model=args.whisper_model,
                     language=source_language
                 )
             except Exception as e:
@@ -372,7 +372,7 @@ def main() -> None:
                 # Use multilingual model for local fallback
                 local_model = "base" if source_language and source_language != "en" else "base.en"
                 segments = transcribe_local_faster_whisper(
-                    input_wav, 
+                    input_wav,
                     local_model=local_model,
                     language=source_language
                 )
@@ -380,7 +380,7 @@ def main() -> None:
             # Use multilingual model for local transcription
             local_model = "base" if source_language and source_language != "en" else "base.en"
             segments = transcribe_local_faster_whisper(
-                input_wav, 
+                input_wav,
                 local_model=local_model,
                 language=source_language
             )
@@ -393,10 +393,10 @@ def main() -> None:
             logger.info(f"Translating segments from {get_language_name(source_language)} to English...")
             if not client:
                 raise RuntimeError("Translation requires OpenAI client. Set OPENAI_API_KEY environment variable.")
-            
+
             try:
                 segments = translate_segments_to_english(
-                    client, segments, 
+                    client, segments,
                     source_language=source_language,
                     model=args.translation_model
                 )
@@ -458,7 +458,7 @@ def main() -> None:
         logger.info("Starting YouTube generation stage")
         youtube_outdir = args.youtube_outdir or os.path.join(args.workdir, "youtube")
         logger.info(f"YouTube output directory: {youtube_outdir}")
-        
+
         # For YouTube, we need OpenAI client if youtube_ai is True
         if args.youtube_ai and not client:
             logger.warning("YouTube AI requested but OpenAI client not available, falling back to SRT-based generation")
@@ -467,9 +467,9 @@ def main() -> None:
         else:
             youtube_client = client if args.youtube_ai else None
             use_ai = args.youtube_ai
-            
+
         logger.info(f"Using AI: {use_ai}, Client available: {youtube_client is not None}")
-        
+
         assets = generate_youtube_assets(
             workdir=args.workdir,
             youtube_source=args.youtube_source,
@@ -479,7 +479,7 @@ def main() -> None:
             title_override=args.youtube_title,
         )
         logger.info(f"Generated assets: {len(assets.chapters)} chapters")
-        
+
         write_youtube_assets(
             youtube_outdir, assets.title, assets.description, assets.chapters
         )

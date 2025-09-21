@@ -23,12 +23,6 @@ from .io_ffmpeg import (
     run,
 )
 from .polish import polish_segments
-from .scenes import (
-    derive_block_boundaries,
-    detect_scene_changes,
-    merge_segments_into_blocks,
-    write_block_srt,
-)
 from .sentences import (
     pack_sentences_into_chunks,
     split_segments_into_sentences,
@@ -36,7 +30,7 @@ from .sentences import (
 )
 from .srt_utils import normalize_segments_by_punct, parse_srt, write_srt
 from .stt import transcribe_local_faster_whisper, transcribe_whisper_api
-from .timeline_async import build_timeline_sentences_async, build_timeline_wav_async
+from .timeline_async import build_timeline_sentences_async
 from .tts_async import make_synth_openai_async, make_synth_openai_batch_async
 from .youtube import generate_youtube_assets, write_youtube_assets
 
@@ -162,7 +156,7 @@ async def main_async() -> None:
         load_dotenv(env_path)
     else:
         load_dotenv()
-    
+
     args = parse_args()
     setup_logging(args.verbose)
 

@@ -3,7 +3,6 @@ Audio and video processing utilities using ffmpeg/ffprobe.
 """
 
 import logging
-import os
 import subprocess
 from pathlib import Path
 
